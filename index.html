@@ -3,61 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ANZ Analyst Bot</title>
+    <title>Chatbot</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="app">
-      <aside class="sidebar" aria-label="Navigation tabs">
-        <h1 class="sidebar-title">ANZ Analyst Bot</h1>
-        <button class="tab-button active" data-tab="chatbot" type="button">
-          Chatbot
-        </button>
-        <button class="tab-button" data-tab="explore" type="button">
-          Explore Metrics
-        </button>
-      </aside>
+      <header class="app-header">
+        <h1>Chatbot</h1>
+        <p>Type your prompt and press Enter.</p>
+      </header>
 
-      <section class="workspace">
-        <section id="panel-chatbot" class="panel active" aria-label="Chatbot panel">
-          <header class="panel-header">
-            <h2>ANZ Analyst Bot</h2>
-            <p>Type your prompt and press Enter.</p>
-          </header>
+      <section id="chat" class="chat" aria-live="polite"></section>
 
-          <section id="chat" class="chat" aria-live="polite"></section>
-
-          <form id="composer" class="composer" autocomplete="off">
-            <input
-              id="promptInput"
-              type="text"
-              placeholder="Send a prompt..."
-              aria-label="Prompt input"
-              required
-            />
-          </form>
-        </section>
-
-        <section id="panel-explore" class="panel" aria-label="Explore metrics panel">
-          <header class="panel-header">
-            <h2>Explore Metrics</h2>
-            <p>Select a metric to preview a sample insight.</p>
-          </header>
-
-          <div class="metric-controls">
-            <label for="metricSelect">Metric</label>
-            <select id="metricSelect">
-              <option value="">Choose a metric</option>
-            </select>
-          </div>
-
-          <p id="metricSample" class="metric-sample">
-            Pick a metric to display a sample summary.
-          </p>
-
-          <section id="graphs" class="graphs" aria-label="Metric graphs"></section>
-        </section>
-      </section>
+      <form id="composer" class="composer" autocomplete="off">
+        <input
+          id="promptInput"
+          type="text"
+          placeholder="Send a prompt..."
+          aria-label="Prompt input"
+          required
+        />
+      </form>
     </main>
 
     <script src="script.js"></script>
