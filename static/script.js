@@ -38,24 +38,6 @@ function appendMessage(text, role, extraClass = "") {
   return item;
 }
 
-function buildResponse(prompt) {
-  const value = prompt.toLowerCase();
-
-  if (value.includes("hello") || value.includes("hi")) {
-    return "Hi! Ask me anything and I will reply right here.";
-  }
-
-  if (value.includes("time")) {
-    return `Current time is ${new Date().toLocaleTimeString()}.`;
-  }
-
-  if (value.includes("date")) {
-    return `Today is ${new Date().toLocaleDateString()}.`;
-  }
-
-  return `You asked: "${prompt}"\n\nThis is a demo chatbot response. Replace this logic with an API call for real AI answers.`;
-}
-
 function switchTab(tabName) {
   tabButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.tab === tabName);
@@ -157,7 +139,32 @@ function setupMetrics() {
   });
 }
 
-composerEl.addEventListener("submit", (event) => {
+function buildDateTimePayload() {
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10);
+  const time = now.toTimeString().slice(0, 8);
+  return { date, time };
+}
+
+async function fetchTimeInfo(payload) {
+  const response = await fetch("/api/time-info", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const responseData = await response.json();
+
+  if (!response.ok) {
+    throw new Error(responseData.error || "Request failed");
+  }
+
+  return responseData;
+}
+
+composerEl.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const prompt = inputEl.value.trim();
@@ -166,12 +173,17 @@ composerEl.addEventListener("submit", (event) => {
   appendMessage(prompt, "user");
   inputEl.value = "";
 
-  const typingBubble = appendMessage("Typing...", "bot", "typing");
+  const typingBubble = appendMessage("Sending to Flask...", "bot", "typing");
 
-  setTimeout(() => {
+  try {
+    const payload = buildDateTimePayload();
+    const backendResponse = await fetchTimeInfo(payload);
     typingBubble.remove();
-    appendMessage(buildResponse(prompt), "bot");
-  }, 500);
+    appendMessage(`Time JSON from Flask:\n${JSON.stringify(backendResponse, null, 2)}`, "bot");
+  } catch (error) {
+    typingBubble.remove();
+    appendMessage(`Backend error: ${error.message}`, "bot");
+  }
 });
 
 tabButtons.forEach((button) => {
@@ -183,6 +195,6 @@ tabButtons.forEach((button) => {
 setupMetrics();
 renderGraphs();
 appendMessage(
-  "Welcome. Your prompt appears on the left, and my response appears on the right.",
+  "Welcome. Send a prompt and I will call Flask with date/time JSON, then show the returned time info.",
   "bot"
 );
