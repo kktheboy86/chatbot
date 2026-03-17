@@ -9,6 +9,7 @@ const explorePanel = document.getElementById("panel-explore");
 const metricSelectEl = document.getElementById("metricSelect");
 const metricSampleEl = document.getElementById("metricSample");
 const graphsEl = document.getElementById("graphs");
+const apiTimeInfoUrl = window.API_TIME_INFO_URL || "/api/time-info";
 
 const metricPool = [
   "Customer Churn Rate",
@@ -157,8 +158,9 @@ async function parseApiResponse(response) {
 }
 
 async function fetchTimeInfoWithGet(payload) {
-  const params = new URLSearchParams(payload);
-  const response = await fetch(`/api/time-info?${params.toString()}`);
+  const getUrl = new URL(apiTimeInfoUrl, window.location.origin);
+  getUrl.search = new URLSearchParams(payload).toString();
+  const response = await fetch(getUrl.toString());
   const responseData = await parseApiResponse(response);
 
   if (!response.ok) {
@@ -169,7 +171,7 @@ async function fetchTimeInfoWithGet(payload) {
 }
 
 async function fetchTimeInfo(payload) {
-  const response = await fetch("/api/time-info", {
+  const response = await fetch(apiTimeInfoUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
