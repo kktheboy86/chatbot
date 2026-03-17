@@ -146,6 +146,28 @@ function buildDateTimePayload() {
   return { date, time };
 }
 
+async function parseApiResponse(response) {
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    return response.json();
+  }
+
+  const textBody = await response.text();
+  return { error: textBody || "Non-JSON response from backend." };
+}
+
+async function fetchTimeInfoWithGet(payload) {
+  const params = new URLSearchParams(payload);
+  const response = await fetch(`/api/time-info?${params.toString()}`);
+  const responseData = await parseApiResponse(response);
+
+  if (!response.ok) {
+    throw new Error(responseData.error || "GET request failed");
+  }
+
+  return responseData;
+}
+
 async function fetchTimeInfo(payload) {
   const response = await fetch("/api/time-info", {
     method: "POST",
@@ -155,10 +177,14 @@ async function fetchTimeInfo(payload) {
     body: JSON.stringify(payload)
   });
 
-  const responseData = await response.json();
+  const responseData = await parseApiResponse(response);
 
   if (!response.ok) {
-    throw new Error(responseData.error || "Request failed");
+    const backendMessage = String(responseData.error || "Request failed");
+    if (backendMessage.toLowerCase().includes("csrf")) {
+      return fetchTimeInfoWithGet(payload);
+    }
+    throw new Error(backendMessage);
   }
 
   return responseData;
@@ -179,7 +205,7 @@ composerEl.addEventListener("submit", async (event) => {
     const payload = buildDateTimePayload();
     const backendResponse = await fetchTimeInfo(payload);
     typingBubble.remove();
-    appendMessage(`Time JSON from Flask:\n${JSON.stringify(backendResponse, null, 2)}`, "bot");
+    appendMessage(`Flask extracted values:\n${JSON.stringify(backendResponse, null, 2)}`, "bot");
   } catch (error) {
     typingBubble.remove();
     appendMessage(`Backend error: ${error.message}`, "bot");
