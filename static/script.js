@@ -9,7 +9,6 @@ const explorePanel = document.getElementById("panel-explore");
 const metricSelectEl = document.getElementById("metricSelect");
 const metricSampleEl = document.getElementById("metricSample");
 const graphsEl = document.getElementById("graphs");
-const apiTimeInfoUrl = window.API_TIME_INFO_URL || "/";
 
 const metricPool = [
   "Customer Churn Rate",
@@ -157,42 +156,19 @@ async function parseApiResponse(response) {
   return { error: textBody || "Non-JSON response from backend." };
 }
 
-async function fetchTimeInfoWithGet(payload, baseUrl = apiTimeInfoUrl) {
-  const getUrl = new URL(baseUrl, window.location.origin);
-  getUrl.search = new URLSearchParams(payload).toString();
-  const response = await fetch(getUrl.toString());
-  const responseData = await parseApiResponse(response);
-
-  if (!response.ok) {
-    throw new Error(responseData.error || "GET request failed");
-  }
-
-  return responseData;
-}
-
 async function fetchTimeInfo(payload) {
-  const response = await fetch(apiTimeInfoUrl, {
+  const formBody = new URLSearchParams(payload);
+  const response = await fetch("/", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
     },
-    body: JSON.stringify(payload)
+    body: formBody.toString()
   });
   const responseData = await parseApiResponse(response);
 
   if (!response.ok) {
-    const backendMessage = String(responseData.error || "Request failed");
-
-    if (backendMessage.toLowerCase().includes("csrf")) {
-      return fetchTimeInfoWithGet(payload, apiTimeInfoUrl);
-    }
-
-    if (response.status === 404) {
-      // Legacy alias fallback in case deployment still wires only /api/time-info.
-      return fetchTimeInfoWithGet(payload, "/api/time-info");
-    }
-
-    throw new Error(backendMessage);
+    throw new Error(String(responseData.error || "Request failed"));
   }
 
   return responseData;
