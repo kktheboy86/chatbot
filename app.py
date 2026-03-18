@@ -39,13 +39,7 @@ def extract_time_parts(time_value):
     raise ValueError("Unsupported time format. Use HH:MM:SS.")
 
 
-@app.get("/")
-def index():
-    return render_template("index.html")
-
-
-@app.route("/api/time-info", methods=["POST", "GET"])
-def time_info():
+def process_time_request():
     if request.method == "POST":
         payload = request.get_json(silent=True)
         if not isinstance(payload, dict):
@@ -75,6 +69,19 @@ def time_info():
             "time_info": time_parts,
         }
     )
+
+
+@app.route("/", methods=["GET", "POST"])
+def home():
+    if request.method == "GET":
+        return render_template("index.html")
+
+    return process_time_request()
+
+
+@app.route("/api/time-info", methods=["POST", "GET"])
+def time_info():
+    return process_time_request()
 
 
 if __name__ == "__main__":

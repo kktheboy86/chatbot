@@ -9,7 +9,7 @@ const explorePanel = document.getElementById("panel-explore");
 const metricSelectEl = document.getElementById("metricSelect");
 const metricSampleEl = document.getElementById("metricSample");
 const graphsEl = document.getElementById("graphs");
-const apiTimeInfoUrl = window.API_TIME_INFO_URL || "/api/time-info";
+const apiTimeInfoUrl = window.API_TIME_INFO_URL || "/";
 
 const metricPool = [
   "Customer Churn Rate",
@@ -157,35 +157,8 @@ async function parseApiResponse(response) {
   return { error: textBody || "Non-JSON response from backend." };
 }
 
-function uniqueUrls(urls) {
-  const seen = new Set();
-  const result = [];
-
-  urls.forEach((urlValue) => {
-    const absolute = new URL(urlValue, window.location.origin).toString();
-    if (!seen.has(absolute)) {
-      seen.add(absolute);
-      result.push(absolute);
-    }
-  });
-
-  return result;
-}
-
-function buildApiCandidates() {
-  const path = window.location.pathname;
-  const basePath = path.endsWith("/") ? path : `${path.substring(0, path.lastIndexOf("/") + 1)}`;
-
-  return uniqueUrls([
-    apiTimeInfoUrl,
-    "/api/time-info",
-    "api/time-info",
-    `${basePath}api/time-info`
-  ]);
-}
-
-async function fetchTimeInfoWithGet(payload, baseUrl) {
-  const getUrl = new URL(baseUrl);
+async function fetchTimeInfoWithGet(payload, baseUrl = apiTimeInfoUrl) {
+  const getUrl = new URL(baseUrl, window.location.origin);
   getUrl.search = new URLSearchParams(payload).toString();
   const response = await fetch(getUrl.toString());
   const responseData = await parseApiResponse(response);
@@ -198,44 +171,31 @@ async function fetchTimeInfoWithGet(payload, baseUrl) {
 }
 
 async function fetchTimeInfo(payload) {
-  const candidates = buildApiCandidates();
-  let lastError = "API not found.";
+  const response = await fetch(apiTimeInfoUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+  const responseData = await parseApiResponse(response);
 
-  for (const candidateUrl of candidates) {
-    try {
-      const response = await fetch(candidateUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
+  if (!response.ok) {
+    const backendMessage = String(responseData.error || "Request failed");
 
-      const responseData = await parseApiResponse(response);
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          lastError = `Not found at ${candidateUrl}`;
-          continue;
-        }
-
-        const backendMessage = String(responseData.error || "Request failed");
-        if (backendMessage.toLowerCase().includes("csrf")) {
-          return fetchTimeInfoWithGet(payload, candidateUrl);
-        }
-
-        lastError = backendMessage;
-        continue;
-      }
-
-      return responseData;
-    } catch (error) {
-      lastError = error.message || "Network error.";
-      continue;
+    if (backendMessage.toLowerCase().includes("csrf")) {
+      return fetchTimeInfoWithGet(payload, apiTimeInfoUrl);
     }
+
+    if (response.status === 404) {
+      // Legacy alias fallback in case deployment still wires only /api/time-info.
+      return fetchTimeInfoWithGet(payload, "/api/time-info");
+    }
+
+    throw new Error(backendMessage);
   }
 
-  throw new Error(lastError);
+  return responseData;
 }
 
 composerEl.addEventListener("submit", async (event) => {
