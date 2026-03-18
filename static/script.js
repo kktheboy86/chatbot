@@ -1,11 +1,7 @@
 const chatEl = document.getElementById("chat");
-const composerEl = document.getElementById("composer");
-const inputEl = document.getElementById("promptInput");
-
 const tabButtons = document.querySelectorAll(".tab-button");
 const chatPanel = document.getElementById("panel-chatbot");
 const explorePanel = document.getElementById("panel-explore");
-
 const metricSelectEl = document.getElementById("metricSelect");
 const metricSampleEl = document.getElementById("metricSample");
 const graphsEl = document.getElementById("graphs");
@@ -28,15 +24,6 @@ const graphTitles = [
   "Daily Movement",
   "Conversion Pattern"
 ];
-
-function appendMessage(text, role, extraClass = "") {
-  const item = document.createElement("div");
-  item.className = `message ${role} ${extraClass}`.trim();
-  item.textContent = text;
-  chatEl.appendChild(item);
-  chatEl.scrollTop = chatEl.scrollHeight;
-  return item;
-}
 
 function switchTab(tabName) {
   tabButtons.forEach((button) => {
@@ -94,15 +81,13 @@ function makeGraphSvg() {
   const values = Array.from({ length: 10 }, () => randomInt(20, 100));
   const path = seriesToPath(values, width, height, padding);
 
-  const svg = `
+  return `
     <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Sample metric graph">
       <line x1="14" y1="145" x2="306" y2="145" stroke="#cbd5e1" stroke-width="1" />
       <line x1="14" y1="20" x2="14" y2="145" stroke="#cbd5e1" stroke-width="1" />
       <path d="${path}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
   `;
-
-  return svg;
 }
 
 function renderGraphs() {
@@ -139,63 +124,6 @@ function setupMetrics() {
   });
 }
 
-function buildDateTimePayload() {
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10);
-  const time = now.toTimeString().slice(0, 8);
-  return { date, time };
-}
-
-async function parseApiResponse(response) {
-  const contentType = response.headers.get("content-type") || "";
-  if (contentType.includes("application/json")) {
-    return response.json();
-  }
-
-  const textBody = await response.text();
-  return { error: textBody || "Non-JSON response from backend." };
-}
-
-async function fetchTimeInfo(payload) {
-  const formBody = new URLSearchParams(payload);
-  const response = await fetch("/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-    },
-    body: formBody.toString()
-  });
-  const responseData = await parseApiResponse(response);
-
-  if (!response.ok) {
-    throw new Error(String(responseData.error || "Request failed"));
-  }
-
-  return responseData;
-}
-
-composerEl.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const prompt = inputEl.value.trim();
-  if (!prompt) return;
-
-  appendMessage(prompt, "user");
-  inputEl.value = "";
-
-  const typingBubble = appendMessage("Sending to Flask...", "bot", "typing");
-
-  try {
-    const payload = buildDateTimePayload();
-    const backendResponse = await fetchTimeInfo(payload);
-    typingBubble.remove();
-    appendMessage(`Flask extracted values:\n${JSON.stringify(backendResponse, null, 2)}`, "bot");
-  } catch (error) {
-    typingBubble.remove();
-    appendMessage(`Backend error: ${error.message}`, "bot");
-  }
-});
-
 tabButtons.forEach((button) => {
   button.addEventListener("click", () => {
     switchTab(button.dataset.tab);
@@ -204,7 +132,7 @@ tabButtons.forEach((button) => {
 
 setupMetrics();
 renderGraphs();
-appendMessage(
-  "Welcome. Send a prompt and I will call Flask with date/time JSON, then show the returned time info.",
-  "bot"
-);
+
+if (chatEl) {
+  chatEl.scrollTop = chatEl.scrollHeight;
+}

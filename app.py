@@ -1,6 +1,7 @@
+import json
 from datetime import datetime
 
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
@@ -39,35 +40,32 @@ def extract_time_parts(time_value):
     raise ValueError("Unsupported time format. Use HH:MM:SS.")
 
 
-def process_time_request():
-    date_value = request.form.get("date")
-    time_value = request.form.get("time")
-
-    if not isinstance(date_value, str) or not isinstance(time_value, str):
-        return jsonify({"error": "Both date and time are required in form data."}), 400
-
-    try:
-        date_parts = extract_date_parts(date_value)
-        time_parts = extract_time_parts(time_value)
-    except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
-
-    return jsonify(
-        {
-            "date_info": date_parts,
-            "time_info": time_parts,
-        }
-    )
-
-
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def home():
-    return render_template("index.html")
+    if request.method == "GET":
+        return render_template("index.html")
 
+    # Ignore prompt content for backend calculation.
+    prompt_text = (request.form.get("prompt") or "").strip()
 
-@app.route("/", methods=["POST"])
-def route():
-    return process_time_request()
+    now_value = datetime.now()
+    date_value = now_value.strftime("%Y-%m-%d")
+    time_value = now_value.strftime("%H:%M:%S")
+
+    date_parts = extract_date_parts(date_value)
+    time_parts = extract_time_parts(time_value)
+
+    extracted_values = {
+        "date_info": date_parts,
+        "time_info": time_parts,
+    }
+
+    return render_template(
+        "index.html",
+        submitted_prompt=prompt_text,
+        extracted_values=extracted_values,
+        extracted_values_pretty=json.dumps(extracted_values, indent=2),
+    )
 
 
 if __name__ == "__main__":

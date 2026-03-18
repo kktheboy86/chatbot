@@ -25,11 +25,31 @@
             <p>Explore any key metrics of ANZ</p>
           </header>
 
-          <section id="chat" class="chat" aria-live="polite"></section>
+          <section id="chat" class="chat" aria-live="polite">
+            <div class="message bot">
+              Welcome. Submit any prompt and Flask will return extracted current date and time values.
+            </div>
 
-          <form id="composer" class="composer" autocomplete="off">
+            {% if submitted_prompt %}
+            <div class="message user">{{ submitted_prompt }}</div>
+            {% endif %}
+
+            {% if extracted_values_pretty %}
+            <div class="message bot">Flask extracted values:
+{{ extracted_values_pretty }}</div>
+            {% endif %}
+          </section>
+
+          <form
+            id="composer"
+            class="composer"
+            autocomplete="off"
+            action="{{ url_for('home') }}"
+            method="post"
+          >
             <input
               id="promptInput"
+              name="prompt"
               type="text"
               placeholder="What do you want to discuss today?"
               aria-label="Prompt input"
