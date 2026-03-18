@@ -8,24 +8,21 @@
   </head>
   <body>
     <main class="app">
-      <aside class="sidebar" aria-label="Navigation tabs">
+      <aside class="sidebar">
         <h1 class="sidebar-title">Tools</h1>
-        <button class="tab-button active" data-tab="chatbot" type="button">
-          Chatbot
-        </button>
-        <button class="tab-button" data-tab="explore" type="button">
-          Explore Metrics
-        </button>
+        <button class="tab-button active" data-tab="chatbot">Chatbot</button>
+        <button class="tab-button" data-tab="explore">Explore Metrics</button>
       </aside>
 
       <section class="workspace">
-        <section id="panel-chatbot" class="panel active" aria-label="Chatbot panel">
+        <!-- Chatbot Panel -->
+        <section id="panel-chatbot" class="panel active">
           <header class="panel-header">
             <h2>ANZ Analyst Bot</h2>
             <p>Explore any key metrics of ANZ</p>
           </header>
 
-          <section id="chat" class="chat" aria-live="polite">
+          <section id="chat" class="chat">
             <div class="message bot">
               Welcome. Submit any prompt and Flask will return extracted current date and time values.
             </div>
@@ -35,30 +32,27 @@
             {% endif %}
 
             {% if extracted_values_pretty %}
-            <div class="message bot">Flask extracted values:
-{{ extracted_values_pretty }}</div>
+            <div class="message bot">
+              Flask extracted values:
+              <pre>{{ extracted_values_pretty }}</pre>
+            </div>
             {% endif %}
           </section>
 
-          <form
-            id="composer"
-            class="composer"
-            autocomplete="off"
-            action="{{ url_for('home') }}"
-            method="post"
-          >
+          <!-- IMPORTANT: no action -->
+          <form id="composer" class="composer" method="post" autocomplete="off">
             <input
               id="promptInput"
               name="prompt"
               type="text"
               placeholder="What do you want to discuss today?"
-              aria-label="Prompt input"
               required
             />
           </form>
         </section>
 
-        <section id="panel-explore" class="panel" aria-label="Explore metrics panel">
+        <!-- Explore Panel -->
+        <section id="panel-explore" class="panel">
           <header class="panel-header">
             <h2>Explore Metrics</h2>
             <p>Select a metric to preview a sample insight.</p>
@@ -75,7 +69,7 @@
             Pick a metric to display a sample summary.
           </p>
 
-          <section id="graphs" class="graphs" aria-label="Metric graphs"></section>
+          <section id="graphs" class="graphs"></section>
         </section>
       </section>
     </main>
